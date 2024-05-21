@@ -1,0 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Authors     :   Emir K Ulusoy
+//email       :   emir.kursad.ulusoy@gmail.com 
+//information :   This mos script returns realtime RSSI reading
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+## sorting E// FDD cells.
+s+
+
+## generic coefficient values for RSSI counters E// 
+$coef1 = 0.79432,0.89716,1.12946,1.42191,1.79008,2.25357,2.83708,3.57167,4.49647,5.66072,11.07925,27.82982,69.90536,175.59432,441.07,630.95
+
+## collecting and storing first-cunter values.
+$RSSI1 = `$moshelldir/moshell $ipaddress 'lt ^EUtranCellFDD$;y;s+;pmxt . pmRadioRecInterferencePwr$|pmRadioRecInterferencePwrPucch$ -o csv -z -4' nolog | awk '{if ($1 ~ /Cell/) {printf "%s#",$1 $2 $3}}'
+
+## waiting for a time period before collecting counters again.
+wait 20
+
+## collecting the counter values a second time and doing all calculations.
+pmxt . pmRadioRecInterferencePwr$|pmRadioRecInterferencePwrPucch$  -o csv -z -4  |  awk -v read1="$RSSI1" -v c="$coef1" '{if ($1 ~ /Cell/) {split(c,coef,",");split($3,post,",");split(read1,preA,$1 $2);split(preA[2],preA,";");split(preA[1],pre,",");num=0;sum=0;{for (j = 1; j <= 16; j++) {num = num+ (( post[j] - pre[j] ) * coef[j]) ; sum=sum+post[j] - pre[j]}} {format = "%m/%d_%H:%M:%S;"; printf("###%20s%75s%40s%20s\n", strftime(format, systime() ), $1, $2,10 * ( log(num/ (sum* 1000000000000 +0.01)) /  log( 10 ))";")}} else {printf("%75s%40s%20s\n", $1, $2, $3 " " $4)} }'
