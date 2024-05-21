@@ -1,0 +1,214 @@
+#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#//Authors     :   Emir K Ulusoy
+#//email       :   emir.kursad.ulusoy@gmail.com 
+#//information :   This text file should be called over amos for calculations.
+#// location   :   This file should be located under /home/shared/$username1/
+#//example     :   
+# uv sls_username > $username1 
+# pmxhe . ^Acc_ErabAttempt$|^Acc_InitialERabEstabSuccRate$|^Acc_InitialERabEstabFailCount$|^Tot_Downtime$ -f /home/shared/$username1/Formulas_Emir.txt  -tz -2 -o csv  -m 48 -h
+# e at pmx command informs to use formula file. 
+# -tz means time zone adjustment.
+# -o csv means csv as output.
+# -m 48 means the time window, and it means 48 hours.
+# -h means hourly aggregated 
+#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#### Retainability (EUtranCellFDD/TDD)
+De_ErabRelAbnormalEnbActQci = decompressArray(pmErabRelAbnormalEnbActQci)
+De_ErabRelAbnormalEnbQci = decompressArray(pmErabRelAbnormalEnbQci)
+De_ErabRelAbnormalMmeActQci = decompressArray(pmErabRelAbnormalMmeActQci)
+De_ErabRelMmeQci = decompressArray(pmErabRelMmeQci)
+De_ErabRelNormalEnbQci = decompressArray(pmErabRelNormalEnbQci)
+
+
+#### Ret_ErabDrop per QCI
+ERabDropcount_Qci_1 = ( @{De_ErabRelAbnormalEnbActQci}[1] + @{De_ErabRelAbnormalMmeActQci}[1] )
+ERabDropcount_Qci_5 = ( @{De_ErabRelAbnormalEnbActQci}[5] + @{De_ErabRelAbnormalMmeActQci}[5] )
+ERabDropcount_Qci_9 = ( @{De_ErabRelAbnormalEnbActQci}[9] + @{De_ErabRelAbnormalMmeActQci}[9] )
+
+
+ENB_ERabDropcount_Qci_1 = ( @{De_ErabRelAbnormalEnbActQci}[1] )
+ENB_ERabDropcount_Qci_5 = ( @{De_ErabRelAbnormalEnbActQci}[5] )
+ENB_ERabDropcount_Qci_9 = ( @{De_ErabRelAbnormalEnbActQci}[9] )
+
+MME_ERabDropcount_Qci_1 = ( @{De_ErabRelAbnormalMmeActQci}[1] )
+MME_ERabDropcount_Qci_5 = ( @{De_ErabRelAbnormalMmeActQci}[5] )
+MME_ERabDropcount_Qci_9 = ( @{De_ErabRelAbnormalMmeActQci}[9] )
+
+ERabTotalRel_Qci_1 = ( @{De_ErabRelAbnormalEnbQci}[1] + @{De_ErabRelMmeQci}[1] + @{De_ErabRelNormalEnbQci}[1] )
+ERabTotalRel_Qci_5 = ( @{De_ErabRelAbnormalEnbQci}[5] + @{De_ErabRelMmeQci}[5] + @{De_ErabRelNormalEnbQci}[5] )
+ERabTotalRel_Qci_9 = ( @{De_ErabRelAbnormalEnbQci}[9] + @{De_ErabRelMmeQci}[9] + @{De_ErabRelNormalEnbQci}[9] )
+
+#### Accessibility (EUtranCellFDD/TDD)
+De_pmErabEstabAttAddedQci = decompressArray(pmErabEstabAttAddedQci)
+De_pmErabEstabSuccAddedQci = decompressArray(pmErabEstabSuccAddedQci)
+De_pmErabEstabAttInitQci = decompressArray(pmErabEstabAttInitQci)
+De_pmErabEstabSuccInitQci = decompressArray(pmErabEstabSuccInitQci)
+
+Acc_RrcConnSetupSuccRate = 100 * pmRrcConnEstabSucc / (pmRrcConnEstabAtt - pmRrcConnEstabAttReatt)
+Acc_S1SigEstabSuccRate = 100 * pmS1SigConnEstabSucc / pmS1SigConnEstabAtt
+Acc_InitialErabSetupSuccRate = 100 * pmErabEstabSuccInit / pmErabEstabAttInit
+Acc_AddedERabEstabSuccRate = 100 * pmErabEstabSuccAdded / pmErabEstabAttAdded
+
+
+Acc_AddedERabEstabSuccRateQci1 = 100 * (@{De_pmErabEstabSuccAddedQci}[1]) / (@{De_pmErabEstabAttAddedQci}[1])
+Acc_InitialErabSetupSuccRateQci1 = 100 * (@{De_pmErabEstabSuccInitQci}[1]) / (@{De_pmErabEstabAttInitQci}[1])
+
+Acc_AddedERabEstabSuccRateQci5 = 100 * (@{De_pmErabEstabSuccAddedQci}[5]) / (@{De_pmErabEstabAttAddedQci}[5])
+Acc_InitialErabSetupSuccRateQci5 = 100 * (@{De_pmErabEstabSuccInitQci}[5]) / (@{De_pmErabEstabAttInitQci}[5])
+
+
+#### Mobility (EUtranRelation)
+Mob_HoPrepSuccRate   = 100 * (pmHoPrepSuccLteIntraF + pmHoPrepSuccLteInterF) / (pmHoPrepAttLteIntraF + pmHoPrepAttLteInterF)
+Mob_HoExecSuccRate   = 100 * (pmHoExeSuccLteIntraF + pmHoExeSuccLteInterF) / (pmHoExeAttLteIntraF + pmHoExeAttLteInterF)
+Mob_MobilitySuccRate = Mob_HoPrepSuccRate * Mob_HoExecSuccRate / 100
+
+
+#### main KPIs
+Acc_ErabAttempt = pmErabEstabAttInit + pmErabEstabAttAdded
+
+Acc_InitialERabEstabSuccRate = 100 * pmRrcConnEstabSucc / (pmRrcConnEstabAtt - pmRrcConnEstabAttReatt) * 100 * pmS1SigConnEstabSucc / pmS1SigConnEstabAtt * 100 * pmErabEstabSuccInit / pmErabEstabAttInit / 10000
+Acc_InitialERabEstabFailCount = ((pmRrcConnEstabAtt - pmRrcConnEstabAttReatt) - pmRrcConnEstabSucc) + (pmS1SigConnEstabAtt - pmS1SigConnEstabSucc) + ( pmErabEstabAttInit - pmErabEstabSuccInit)
+
+Acc_InitialERabEstabSuccRateQci1 = 100 * pmRrcConnEstabSucc / (pmRrcConnEstabAtt - pmRrcConnEstabAttReatt) * 100 * pmS1SigConnEstabSucc / pmS1SigConnEstabAtt  * 100 * (@{De_pmErabEstabSuccInitQci}[5]) / (@{De_pmErabEstabAttInitQci}[5]) * 100 * (@{De_pmErabEstabSuccAddedQci}[1]) / (@{De_pmErabEstabAttAddedQci}[1]) * 100 * (@{De_pmErabEstabSuccAddedQci}[5]) / (@{De_pmErabEstabAttAddedQci}[5]) / 100000000
+Acc_InitialERabEstabFailCountQci1 = ((@{De_pmErabEstabAttInitQci}[5] - @{De_pmErabEstabSuccInitQci}[5])) + (@{De_pmErabEstabAttAddedQci}[1] - @{De_pmErabEstabSuccAddedQci}[1] ) + (@{De_pmErabEstabAttAddedQci}[5] - @{De_pmErabEstabSuccAddedQci}[5] )
+
+Ret_ERabRetainabilityRate        = 100 * (pmErabRelAbnormalEnbAct + pmErabRelAbnormalMmeAct) / (pmErabRelMme + pmErabRelNormalEnb + pmErabRelAbnormalEnb)
+Ret_ERabRetainabilityCount       = (pmErabRelAbnormalEnbAct + pmErabRelAbnormalMmeAct)
+
+Ret_ERabRetainabilityRateQci1    = 100 * (@{De_ErabRelAbnormalEnbActQci}[1] + @{De_ErabRelAbnormalMmeActQci}[1]) / ( @{De_ErabRelAbnormalEnbQci}[1] + @{De_ErabRelMmeQci}[1] + @{De_ErabRelNormalEnbQci}[1] )
+Ret_ERabRetainabilityCountQci1   = (@{De_ErabRelAbnormalEnbActQci}[1] + @{De_ErabRelAbnormalMmeActQci}[1])
+
+Mob_IRAT_Redirect = 100 * (pmUeCtxtRelSCCdma + pmUeCtxtRelSCGsm + pmUeCtxtRelSCWcdma) / pmUeCtxtEstabSucc
+CSFB = (PMUECTXTRELCSFBWCDMA + PMUECTXTRELCSFBWCDMAEM ) / pmUeCtxtEstabSucc
+
+DL_VOL   = 	(pmPdcpVolDlDrb / 8) * .000001
+Int_DlThroughput_kbps      = 1000 * (pmPdcpVolDlDrb - pmPdcpVolDlDrbLastTTI + pmPdcpVolDlDrbTransUm) / pmUeThpTimeDl
+
+UL_VOL = (pmPdcpVolUlDrb / 8) * .000001  
+Int_UlThroughput_kbps      = 1000 * pmUeThpVolUl / pmUeThpTimeUl
+
+Tot_Downtime = pmCellDowntimeAuto + pmCellDowntimeMan
+
+#### Load KPIs
+DLPRBLoad_vec =  WeightedAverage(pmPrbUtilDl,[5,15,25,35,45,55,65,75,85,95])
+ULPRBLoad_vec =  WeightedAverage(pmPrbUtilUl,[5,15,25,35,45,55,65,75,85,95])
+DLPRBLoad_sum = (pmPrbUsedDlSum/pmPrbAvailDl)*100*1000
+ULPRBLoad_sum = (pmPrbUsedUlSum/pmPrbAvailUl)*100*1000
+
+PRBcount = 25 + 25 * (pmRadioRecInterferencePwrBrPrb92/(pmRadioRecInterferencePwrBrPrb92+0.000000000000000000000001))+ 25 * (pmRadioRecInterferencePwrBrPrb72/(pmRadioRecInterferencePwrBrPrb72+0.000000000000000000000001)) + 25 * (pmRadioRecInterferencePwrBrPrb42/(pmRadioRecInterferencePwrBrPrb42+0.000000000000000000000001))
+
+#### RSSI KPIs
+BranchRSSI_sum= (pmRadioRecInterferencePwrBrPrb1+pmRadioRecInterferencePwrBrPrb2+pmRadioRecInterferencePwrBrPrb3+pmRadioRecInterferencePwrBrPrb4+pmRadioRecInterferencePwrBrPrb5+pmRadioRecInterferencePwrBrPrb6+pmRadioRecInterferencePwrBrPrb7+pmRadioRecInterferencePwrBrPrb8+pmRadioRecInterferencePwrBrPrb9+pmRadioRecInterferencePwrBrPrb10+pmRadioRecInterferencePwrBrPrb11+pmRadioRecInterferencePwrBrPrb12+pmRadioRecInterferencePwrBrPrb13+pmRadioRecInterferencePwrBrPrb14+pmRadioRecInterferencePwrBrPrb15+pmRadioRecInterferencePwrBrPrb16+pmRadioRecInterferencePwrBrPrb17+pmRadioRecInterferencePwrBrPrb18+pmRadioRecInterferencePwrBrPrb19+pmRadioRecInterferencePwrBrPrb20+pmRadioRecInterferencePwrBrPrb21+pmRadioRecInterferencePwrBrPrb22+pmRadioRecInterferencePwrBrPrb23+pmRadioRecInterferencePwrBrPrb24+pmRadioRecInterferencePwrBrPrb25+pmRadioRecInterferencePwrBrPrb26+pmRadioRecInterferencePwrBrPrb27+pmRadioRecInterferencePwrBrPrb28+pmRadioRecInterferencePwrBrPrb29+pmRadioRecInterferencePwrBrPrb30+pmRadioRecInterferencePwrBrPrb31+pmRadioRecInterferencePwrBrPrb32+pmRadioRecInterferencePwrBrPrb33+pmRadioRecInterferencePwrBrPrb34+pmRadioRecInterferencePwrBrPrb35+pmRadioRecInterferencePwrBrPrb36+pmRadioRecInterferencePwrBrPrb37+pmRadioRecInterferencePwrBrPrb38+pmRadioRecInterferencePwrBrPrb39+pmRadioRecInterferencePwrBrPrb40+pmRadioRecInterferencePwrBrPrb41+pmRadioRecInterferencePwrBrPrb42+pmRadioRecInterferencePwrBrPrb43+pmRadioRecInterferencePwrBrPrb44+pmRadioRecInterferencePwrBrPrb45+pmRadioRecInterferencePwrBrPrb46+pmRadioRecInterferencePwrBrPrb47+pmRadioRecInterferencePwrBrPrb48+pmRadioRecInterferencePwrBrPrb49+pmRadioRecInterferencePwrBrPrb50+pmRadioRecInterferencePwrBrPrb51+pmRadioRecInterferencePwrBrPrb52+pmRadioRecInterferencePwrBrPrb53+pmRadioRecInterferencePwrBrPrb54+pmRadioRecInterferencePwrBrPrb55+pmRadioRecInterferencePwrBrPrb56+pmRadioRecInterferencePwrBrPrb57+pmRadioRecInterferencePwrBrPrb58+pmRadioRecInterferencePwrBrPrb59+pmRadioRecInterferencePwrBrPrb60+pmRadioRecInterferencePwrBrPrb61+pmRadioRecInterferencePwrBrPrb62+pmRadioRecInterferencePwrBrPrb63+pmRadioRecInterferencePwrBrPrb64+pmRadioRecInterferencePwrBrPrb65+pmRadioRecInterferencePwrBrPrb66+pmRadioRecInterferencePwrBrPrb67+pmRadioRecInterferencePwrBrPrb68+pmRadioRecInterferencePwrBrPrb69+pmRadioRecInterferencePwrBrPrb70+pmRadioRecInterferencePwrBrPrb71+pmRadioRecInterferencePwrBrPrb72+pmRadioRecInterferencePwrBrPrb73+pmRadioRecInterferencePwrBrPrb74+pmRadioRecInterferencePwrBrPrb75+pmRadioRecInterferencePwrBrPrb76+pmRadioRecInterferencePwrBrPrb77+pmRadioRecInterferencePwrBrPrb78+pmRadioRecInterferencePwrBrPrb79+pmRadioRecInterferencePwrBrPrb80+pmRadioRecInterferencePwrBrPrb81+pmRadioRecInterferencePwrBrPrb82+pmRadioRecInterferencePwrBrPrb83+pmRadioRecInterferencePwrBrPrb84+pmRadioRecInterferencePwrBrPrb85+pmRadioRecInterferencePwrBrPrb86+pmRadioRecInterferencePwrBrPrb87+pmRadioRecInterferencePwrBrPrb88+pmRadioRecInterferencePwrBrPrb89+pmRadioRecInterferencePwrBrPrb90+pmRadioRecInterferencePwrBrPrb91+pmRadioRecInterferencePwrBrPrb92+pmRadioRecInterferencePwrBrPrb93+pmRadioRecInterferencePwrBrPrb94+pmRadioRecInterferencePwrBrPrb95+pmRadioRecInterferencePwrBrPrb96+pmRadioRecInterferencePwrBrPrb97+pmRadioRecInterferencePwrBrPrb98+pmRadioRecInterferencePwrBrPrb99+pmRadioRecInterferencePwrBrPrb100)
+
+#5 sec window, 25 sample in 1 sec, divide to PRB count
+BranchRSSI_5sec = 10*log10(BranchRSSI_sum * .00000000000005684341886080801486968994140625 / ((5 * 25 * PRBcount ) + 0.000000000000000000000000000000001 ))
+
+BranchRSSI_7sec = 10*log10(BranchRSSI_sum * .00000000000005684341886080801486968994140625 / ((7 * 25 * PRBcount ) + 0.000000000000000000000000000000001 ))
+BranchRSSI_10sec = 10*log10(BranchRSSI_sum * .00000000000005684341886080801486968994140625 / ((10 * 25 * PRBcount ) + 0.000000000000000000000000000000001 ))
+BranchRSSI_12sec = 10*log10(BranchRSSI_sum * .00000000000005684341886080801486968994140625 / ((12 * 25 * PRBcount ) + 0.000000000000000000000000000000001 ))
+BranchRSSI_1hour = 10*log10(BranchRSSI_sum * .00000000000005684341886080801486968994140625 / ((60 * 60 * 25 * PRBcount ) + 0.000000000000000000000000000000001 ))
+BranchRSSI_15min = 10*log10(BranchRSSI_sum * .00000000000005684341886080801486968994140625 / ((15 * 60 * 25 * PRBcount ) + 0.000000000000000000000000000000001 ))
+
+#### Interference per PRB in dBm
+Int_RadioRecInterferencePwrBrPrb1 = 10*log10(pmRadioRecInterferencePwrBrPrb1 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb2 = 10*log10(pmRadioRecInterferencePwrBrPrb2 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb3 = 10*log10(pmRadioRecInterferencePwrBrPrb3 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb4 = 10*log10(pmRadioRecInterferencePwrBrPrb4 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb5 = 10*log10(pmRadioRecInterferencePwrBrPrb5 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb6 = 10*log10(pmRadioRecInterferencePwrBrPrb6 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb7 = 10*log10(pmRadioRecInterferencePwrBrPrb7 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb8 = 10*log10(pmRadioRecInterferencePwrBrPrb8 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb9 = 10*log10(pmRadioRecInterferencePwrBrPrb9 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb10 = 10*log10(pmRadioRecInterferencePwrBrPrb10 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb11 = 10*log10(pmRadioRecInterferencePwrBrPrb11 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb12 = 10*log10(pmRadioRecInterferencePwrBrPrb12 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb13 = 10*log10(pmRadioRecInterferencePwrBrPrb13 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb14 = 10*log10(pmRadioRecInterferencePwrBrPrb14 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb15 = 10*log10(pmRadioRecInterferencePwrBrPrb15 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb16 = 10*log10(pmRadioRecInterferencePwrBrPrb16 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb17 = 10*log10(pmRadioRecInterferencePwrBrPrb17 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb18 = 10*log10(pmRadioRecInterferencePwrBrPrb18 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb19 = 10*log10(pmRadioRecInterferencePwrBrPrb19 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb20 = 10*log10(pmRadioRecInterferencePwrBrPrb20 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb21 = 10*log10(pmRadioRecInterferencePwrBrPrb21 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb22 = 10*log10(pmRadioRecInterferencePwrBrPrb22 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb23 = 10*log10(pmRadioRecInterferencePwrBrPrb23 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb24 = 10*log10(pmRadioRecInterferencePwrBrPrb24 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb25 = 10*log10(pmRadioRecInterferencePwrBrPrb25 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb26 = 10*log10(pmRadioRecInterferencePwrBrPrb26 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb27 = 10*log10(pmRadioRecInterferencePwrBrPrb27 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb28 = 10*log10(pmRadioRecInterferencePwrBrPrb28 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb29 = 10*log10(pmRadioRecInterferencePwrBrPrb29 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb30 = 10*log10(pmRadioRecInterferencePwrBrPrb30 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb31 = 10*log10(pmRadioRecInterferencePwrBrPrb31 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb32 = 10*log10(pmRadioRecInterferencePwrBrPrb32 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb33 = 10*log10(pmRadioRecInterferencePwrBrPrb33 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb34 = 10*log10(pmRadioRecInterferencePwrBrPrb34 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb35 = 10*log10(pmRadioRecInterferencePwrBrPrb35 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb36 = 10*log10(pmRadioRecInterferencePwrBrPrb36 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb37 = 10*log10(pmRadioRecInterferencePwrBrPrb37 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb38 = 10*log10(pmRadioRecInterferencePwrBrPrb38 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb39 = 10*log10(pmRadioRecInterferencePwrBrPrb39 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb40 = 10*log10(pmRadioRecInterferencePwrBrPrb40 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb41 = 10*log10(pmRadioRecInterferencePwrBrPrb41 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb42 = 10*log10(pmRadioRecInterferencePwrBrPrb42 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb43 = 10*log10(pmRadioRecInterferencePwrBrPrb43 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb44 = 10*log10(pmRadioRecInterferencePwrBrPrb44 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb45 = 10*log10(pmRadioRecInterferencePwrBrPrb45 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb46 = 10*log10(pmRadioRecInterferencePwrBrPrb46 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb47 = 10*log10(pmRadioRecInterferencePwrBrPrb47 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb48 = 10*log10(pmRadioRecInterferencePwrBrPrb48 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb49 = 10*log10(pmRadioRecInterferencePwrBrPrb49 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb50 = 10*log10(pmRadioRecInterferencePwrBrPrb50 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb51 = 10*log10(pmRadioRecInterferencePwrBrPrb51 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb52 = 10*log10(pmRadioRecInterferencePwrBrPrb52 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb53 = 10*log10(pmRadioRecInterferencePwrBrPrb53 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb54 = 10*log10(pmRadioRecInterferencePwrBrPrb54 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb55 = 10*log10(pmRadioRecInterferencePwrBrPrb55 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb56 = 10*log10(pmRadioRecInterferencePwrBrPrb56 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb57 = 10*log10(pmRadioRecInterferencePwrBrPrb57 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb58 = 10*log10(pmRadioRecInterferencePwrBrPrb58 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb59 = 10*log10(pmRadioRecInterferencePwrBrPrb59 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb60 = 10*log10(pmRadioRecInterferencePwrBrPrb60 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb61 = 10*log10(pmRadioRecInterferencePwrBrPrb61 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb62 = 10*log10(pmRadioRecInterferencePwrBrPrb62 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb63 = 10*log10(pmRadioRecInterferencePwrBrPrb63 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb64 = 10*log10(pmRadioRecInterferencePwrBrPrb64 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb65 = 10*log10(pmRadioRecInterferencePwrBrPrb65 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb66 = 10*log10(pmRadioRecInterferencePwrBrPrb66 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb67 = 10*log10(pmRadioRecInterferencePwrBrPrb67 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb68 = 10*log10(pmRadioRecInterferencePwrBrPrb68 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb69 = 10*log10(pmRadioRecInterferencePwrBrPrb69 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb70 = 10*log10(pmRadioRecInterferencePwrBrPrb70 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb71 = 10*log10(pmRadioRecInterferencePwrBrPrb71 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb72 = 10*log10(pmRadioRecInterferencePwrBrPrb72 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb73 = 10*log10(pmRadioRecInterferencePwrBrPrb73 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb74 = 10*log10(pmRadioRecInterferencePwrBrPrb74 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb75 = 10*log10(pmRadioRecInterferencePwrBrPrb75 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb76 = 10*log10(pmRadioRecInterferencePwrBrPrb76 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb77 = 10*log10(pmRadioRecInterferencePwrBrPrb77 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb78 = 10*log10(pmRadioRecInterferencePwrBrPrb78 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb79 = 10*log10(pmRadioRecInterferencePwrBrPrb79 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb80 = 10*log10(pmRadioRecInterferencePwrBrPrb80 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb81 = 10*log10(pmRadioRecInterferencePwrBrPrb81 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb82 = 10*log10(pmRadioRecInterferencePwrBrPrb82 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb83 = 10*log10(pmRadioRecInterferencePwrBrPrb83 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb84 = 10*log10(pmRadioRecInterferencePwrBrPrb84 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb85 = 10*log10(pmRadioRecInterferencePwrBrPrb85 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb86 = 10*log10(pmRadioRecInterferencePwrBrPrb86 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb87 = 10*log10(pmRadioRecInterferencePwrBrPrb87 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb88 = 10*log10(pmRadioRecInterferencePwrBrPrb88 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb89 = 10*log10(pmRadioRecInterferencePwrBrPrb89 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb90 = 10*log10(pmRadioRecInterferencePwrBrPrb90 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb91 = 10*log10(pmRadioRecInterferencePwrBrPrb91 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb92 = 10*log10(pmRadioRecInterferencePwrBrPrb92 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb93 = 10*log10(pmRadioRecInterferencePwrBrPrb93 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb94 = 10*log10(pmRadioRecInterferencePwrBrPrb94 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb95 = 10*log10(pmRadioRecInterferencePwrBrPrb95 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb96 = 10*log10(pmRadioRecInterferencePwrBrPrb96 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb97 = 10*log10(pmRadioRecInterferencePwrBrPrb97 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb98 = 10*log10(pmRadioRecInterferencePwrBrPrb98 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb99 = 10*log10(pmRadioRecInterferencePwrBrPrb99 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
+Int_RadioRecInterferencePwrBrPrb100 = 10*log10(pmRadioRecInterferencePwrBrPrb100 * .00000000000005684341886080801486968994140625 / (900000 / 40) ) 
